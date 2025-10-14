@@ -56,10 +56,10 @@ function App() {
 
   const chartData = {
     labels: [
-      "Failed Files",
-      "Processed Files",
       "Total Files",
+      "Processed Files",
       "OCR Files",
+      "Failed Files",
       "Unsupported Files",
     ],
     datasets: [
@@ -67,19 +67,19 @@ function App() {
         label: "Count",
         data: data
           ? [
-              data?.failedCout,
-              data?.processedCount,
-              data?.toBeProcessedCount,
-              data?.ocrCount,
-              data?.unsupportedCount,
-            ]
+            data?.toBeProcessedCount,
+            data?.processedCount,
+            data?.ocrCount,
+            data?.failedCout,
+            data?.unsupportedCount,
+          ]
           : [0, 0, 0, 0, 0],
         backgroundColor: [
-          "rgba(245, 37, 9, 0.6)",
-          "rgba(79, 222, 222, 0.6)",
-          "rgba(51, 157, 227, 0.6)",
-          "rgba(238, 200, 105, 0.6)",
-          "rgba(72, 43, 131, 0.6)",
+          "#FFDE63",
+          "#78C841",
+          "#33A1E0",
+          "#E62727",
+          "grey",
         ],
         pointBackgroundColor: [
           "rgba(152, 3, 3, 1)",
@@ -117,7 +117,7 @@ function App() {
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center bg-light" style={{overflow: "scroll", height: "90%"}}>
+    <div className="d-flex justify-content-center align-items-center bg-light" style={{ overflow: "scroll", height: "90%" }}>
       <Card
         style={{
           width: "100%",
@@ -175,20 +175,20 @@ function App() {
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Failed Files</td>
-                      <td>{data?.failedCout ?? 0}</td>
+                      <td>Total Files</td>
+                      <td>{data?.toBeProcessedCount ?? 0}</td>
                     </tr>
                     <tr>
                       <td>Processed Files</td>
                       <td>{data?.processedCount ?? 0}</td>
                     </tr>
                     <tr>
-                      <td>Total Files</td>
-                      <td>{data?.toBeProcessedCount ?? 0}</td>
-                    </tr>
-                    <tr>
                       <td>OCR Files</td>
                       <td>{data?.ocrCount ?? 0}</td>
+                    </tr>
+                    <tr>
+                      <td>Failed Files</td>
+                      <td>{data?.failedCout ?? 0}</td>
                     </tr>
                     <tr>
                       <td>Unsupported Files</td>
