@@ -92,6 +92,7 @@ function App() {
         tension: 0.4,
         fill: false,
         showLine: true,
+        barPercentage: 0.4,
       },
     ],
   };
