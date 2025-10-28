@@ -29,6 +29,7 @@ ChartJS.register(
 
 function App() {
   const [data, setData] = useState(null);
+  const [batchData, setBatchData] = useState(null)
   const [chartType, setChartType] = useState("bar");
   const [dashboardType, setDashboardType] = useState("fileProcessing");
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -45,7 +46,7 @@ function App() {
       if (dashboardType === "fileProcessing") {
         setData(res?.data?.data);
       } else if (dashboardType === "batchExtraction") {
-        setData(res?.data);
+        setBatchData(res?.data);
       }
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (error) {
@@ -110,11 +111,11 @@ useEffect(() => {
         datasets: [
           {
             label: "Batch Count",
-            data: data
+            data: batchData
               ? [
-                data?.pendingCount,
-                data?.inProgressCount,
-                data?.completedCount,
+                batchData?.pendingCount,
+                batchData?.inProgressCount,
+                batchData?.completedCount,
               ]
               : [0, 0, 0, 0, 0],
             backgroundColor: [
@@ -161,7 +162,7 @@ useEffect(() => {
 
   // ------------------- TABLES -------------------
   const renderTable = () => {
-    if (!data) return null;
+    if (!data && !batchData) return null;
 
     if (dashboardType === "fileProcessing") {
       return (
@@ -209,15 +210,15 @@ useEffect(() => {
           <tbody>
             <tr>
               <td>Pending</td>
-              <td>{data?.pendingCount ?? 0}</td>
+              <td>{batchData?.pendingCount ?? 0}</td>
             </tr>
             <tr>
               <td>In Progress</td>
-              <td>{data?.inProgressCount ?? 0}</td>
+              <td>{batchData?.inProgressCount ?? 0}</td>
             </tr>
             <tr>
               <td>Completed</td>
-              <td>{data?.completedCount ?? 0}</td>
+              <td>{batchData?.completedCount ?? 0}</td>
             </tr>
           </tbody>
         </Table>
@@ -286,7 +287,7 @@ useEffect(() => {
         </Card.Header>
 
         <Card.Body className="bg-white">
-          {!data ? (
+          {!(data || batchData) ? (
             <div
               className="d-flex justify-content-center align-items-center"
               style={{ height: "300px" }}
