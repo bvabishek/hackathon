@@ -30,83 +30,125 @@ ChartJS.register(
 function App() {
   const [data, setData] = useState(null);
   const [chartType, setChartType] = useState("bar");
+  const [dashboardType, setDashboardType] = useState("fileProcessing");
   const [lastUpdated, setLastUpdated] = useState(null);
+
+  const ENDPOINTS = {
+    fileProcessing:
+      "https://vyizdv7gpwr2biqnz6phaevswy0nrqss.lambda-url.ap-south-1.on.aws",
+    batchExtraction: "https://volity4ygyqqtyeu2u3s7hespq0vgews.lambda-url.ap-south-1.on.aws", // ⚠️ Replace with your API
+  };
 
   const fetchData = async () => {
     try {
-      const res = await axios.get(
-        "https://vyizdv7gpwr2biqnz6phaevswy0nrqss.lambda-url.ap-south-1.on.aws"
-      );
-      setData(res?.data?.data);
+      const res = await axios.get(ENDPOINTS[dashboardType]);
+      if (dashboardType === "fileProcessing") {
+        setData(res?.data?.data);
+      } else if (dashboardType === "batchExtraction") {
+        setData(res?.data);
+      }
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (error) {
       console.error("Error fetching data:", error);
+      setData(null);
     }
   };
 
-  useEffect(() => {
-    fetchData();
 
-    const interval = setInterval(() => {
-      fetchData();
-    }, 60000);
+useEffect(() => {
+  setData(null);
+  fetchData();
+  const interval = setInterval(fetchData, 60000);
+  return () => clearInterval(interval);
+}, [dashboardType]);
 
-    return () => clearInterval(interval);
-  }, []);
 
-  const chartData = {
-    labels: [
-      "Total Files",
-      "Processed Files",
-      "OCR Files",
-      "Failed Files",
-      "Unsupported Files",
-    ],
-    datasets: [
-      {
-        label: "Count",
-        data: data
-          ? [
-            data?.toBeProcessedCount,
-            data?.processedCount,
-            data?.ocrCount,
-            data?.failedCout,
-            data?.unsupportedCount,
-          ]
-          : [0, 0, 0, 0, 0],
-        backgroundColor: [
-          "#FFDE63",
-          "#78C841",
-          "#33A1E0",
-          "#E62727",
-          "grey",
+  // ------------------- CHART CONFIG -------------------
+  const getChartData = () => {
+    if (dashboardType === "fileProcessing") {
+      return {
+        labels: [
+          "Total Files",
+          "Processed Files",
+          "OCR Files",
+          "Failed Files",
+          "Unsupported Files",
         ],
-        pointBackgroundColor: [
-          "rgba(152, 3, 3, 1)",
-          "rgba(75, 192, 192, 1)",
-          "rgba(54, 162, 235, 1)",
-          "rgba(255, 206, 86, 1)",
-          "rgba(153, 102, 255, 1)",
+        datasets: [
+          {
+            label: "Count",
+            data: data
+              ? [
+                data?.toBeProcessedCount,
+                data?.processedCount,
+                data?.ocrCount,
+                data?.failedCout,
+                data?.unsupportedCount,
+              ]
+              : [0, 0, 0, 0, 0],
+            backgroundColor: [
+              "#FFDE63",
+              "#78C841",
+              "#33A1E0",
+              "#E62727",
+              "grey",
+            ],
+            borderWidth: 1.5,
+            tension: 0.4,
+            fill: false,
+          },
         ],
-        borderWidth: 1.5,
-        tension: 0.4,
-        fill: false,
-        showLine: true,
-        barPercentage: 0.4,
-      },
-    ],
+      };
+    } else {
+      // Example for batch extraction (change fields based on API)
+      return {
+        labels: [
+          "Pending",
+          "In Progress",
+          "Completed Count",
+        ],
+        datasets: [
+          {
+            label: "Batch Count",
+            data: data
+              ? [
+                data?.pendingCount,
+                data?.inProgressCount,
+                data?.completedCount,
+              ]
+              : [0, 0, 0, 0, 0],
+            backgroundColor: [
+              "#36A2EB",
+              "#4BC0C0",
+              "#FFCE56",
+              "#E62727",
+              "#9966FF",
+            ],
+            borderWidth: 1.5,
+            tension: 0.4,
+            fill: false,
+          },
+        ],
+      };
+    }
   };
 
   const chartOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        position: "bottom",
+      legend: { position: "bottom" },
+      title: {
+        display: true,
+        text:
+          dashboardType === "fileProcessing"
+            ? "File Processing Metrics"
+            : "Batch Extraction Metrics",
       },
     },
   };
 
   const renderChart = () => {
+    const chartData = getChartData();
     switch (chartType) {
       case "line":
         return <Line data={chartData} options={chartOptions} />;
@@ -117,8 +159,78 @@ function App() {
     }
   };
 
+  // ------------------- TABLES -------------------
+  const renderTable = () => {
+    if (!data) return null;
+
+    if (dashboardType === "fileProcessing") {
+      return (
+        <Table striped bordered hover size="xs" className="text-center">
+          <thead className="table-light">
+            <tr>
+              <th>Metric</th>
+              <th>Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Total Files</td>
+              <td>{data?.toBeProcessedCount ?? 0}</td>
+            </tr>
+            <tr>
+              <td>Processed Files</td>
+              <td>{data?.processedCount ?? 0}</td>
+            </tr>
+            <tr>
+              <td>OCR Files</td>
+              <td>{data?.ocrCount ?? 0}</td>
+            </tr>
+            <tr>
+              <td>Failed Files</td>
+              <td>{data?.failedCout ?? 0}</td>
+            </tr>
+            <tr>
+              <td>Unsupported Files</td>
+              <td>{data?.unsupportedCount ?? 0}</td>
+            </tr>
+          </tbody>
+        </Table>
+      );
+    } else {
+      // ⚙️ Example Batch Extraction Table (adjust columns to your API)
+      return (
+        <Table striped bordered hover size="xs" className="text-center">
+          <thead className="table-light">
+            <tr>
+              <th>Metric</th>
+              <th>Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Pending</td>
+              <td>{data?.pendingCount ?? 0}</td>
+            </tr>
+            <tr>
+              <td>In Progress</td>
+              <td>{data?.inProgressCount ?? 0}</td>
+            </tr>
+            <tr>
+              <td>Completed</td>
+              <td>{data?.completedCount ?? 0}</td>
+            </tr>
+          </tbody>
+        </Table>
+      );
+    }
+  };
+
+  // ------------------- RENDER -------------------
   return (
-    <div className="d-flex justify-content-center align-items-center bg-light" style={{ overflow: "scroll", height: "90%" }}>
+    <div
+      className="d-flex justify-content-center align-items-center bg-light"
+      style={{ overflow: "scroll", height: "90%" }}
+    >
       <Card
         style={{
           width: "100%",
@@ -141,16 +253,36 @@ function App() {
             <strong>Live Metrics Dashboard</strong>
           </div>
 
-          <Dropdown onSelect={(eventKey) => setChartType(eventKey)}>
-            <Dropdown.Toggle variant="light" size="sm">
-              {chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item eventKey="bar">Bar Chart</Dropdown.Item>
-              <Dropdown.Item eventKey="line">Line Chart</Dropdown.Item>
-              <Dropdown.Item eventKey="pie">Pie Chart</Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
+          <div className="d-flex align-items-center gap-2">
+            {/* Dashboard Type Dropdown */}
+            <Dropdown onSelect={(eventKey) => setDashboardType(eventKey)}>
+              <Dropdown.Toggle variant="light" size="sm">
+                {dashboardType === "fileProcessing"
+                  ? "File Processing"
+                  : "Batch Extraction"}
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                <Dropdown.Item eventKey="fileProcessing">
+                  File Processing
+                </Dropdown.Item>
+                <Dropdown.Item eventKey="batchExtraction">
+                  Batch Extraction
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
+
+            {/* Chart Type Dropdown */}
+            <Dropdown onSelect={(eventKey) => setChartType(eventKey)}>
+              <Dropdown.Toggle variant="light" size="sm">
+                {chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                <Dropdown.Item eventKey="bar">Bar Chart</Dropdown.Item>
+                <Dropdown.Item eventKey="line">Line Chart</Dropdown.Item>
+                <Dropdown.Item eventKey="pie">Pie Chart</Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
+          </div>
         </Card.Header>
 
         <Card.Body className="bg-white">
@@ -162,43 +294,13 @@ function App() {
               <Spinner animation="border" variant="primary" />
             </div>
           ) : (
-            <div>
-              <div className="chart-container mb-4 d-flex justify-content-center">{renderChart()}</div>
-              <hr />
-              {/* --- Summary Table --- */}
-              <div className="table-responsive">
-                <Table striped bordered hover size="xs" className="text-center">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Metric</th>
-                      <th>Count</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Total Files</td>
-                      <td>{data?.toBeProcessedCount ?? 0}</td>
-                    </tr>
-                    <tr>
-                      <td>Processed Files</td>
-                      <td>{data?.processedCount ?? 0}</td>
-                    </tr>
-                    <tr>
-                      <td>OCR Files</td>
-                      <td>{data?.ocrCount ?? 0}</td>
-                    </tr>
-                    <tr>
-                      <td>Failed Files</td>
-                      <td>{data?.failedCout ?? 0}</td>
-                    </tr>
-                    <tr>
-                      <td>Unsupported Files</td>
-                      <td>{data?.unsupportedCount ?? 0}</td>
-                    </tr>
-                  </tbody>
-                </Table>
+            <>
+              <div className="chart-container mb-4 d-flex justify-content-center">
+                {renderChart()}
               </div>
-            </div>
+              <hr />
+              <div className="table-responsive">{renderTable()}</div>
+            </>
           )}
         </Card.Body>
 
